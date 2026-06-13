@@ -49,7 +49,6 @@ export default function App() {
   const [meshColor,        setMeshColor]        = useState<[number, number, number]>(MATERIAL_COLORS.chrome);
   const [useDualMaterial,  setUseDualMaterial]  = useState(true);
   const [tireThresholdPct, setTireThresholdPct] = useState(0.78); // 78% del radio = borde rin/llanta
-  const [stats,            setStats]            = useState<RendererStats>({ fps: 0, frameTime: 0, vertexCount: 0, faceCount: 0, drawCalls: 0 });
   const [error,            setError]            = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
@@ -98,8 +97,24 @@ export default function App() {
   const handleAnimChange   = useCallback((p: Partial<AnimationState>) => setAnimState(prev => ({ ...prev, ...p })), []);
   const handleCameraChange = useCallback((p: Partial<CameraParams>)   => setCamera(prev  => ({ ...prev, ...p })), []);
   const handleLightChange  = useCallback((p: Partial<LightParams>)    => setLight(prev   => ({ ...prev, ...p })), []);
-  const handleAngleUpdate  = useCallback((a: number) => setAnimState(prev => ({ ...prev, currentAngle: a })), []);
-  const handleStatsUpdate  = useCallback((s: RendererStats) => setStats(s), []);
+  const handleStatsUpdate = useCallback((s: RendererStats) => {
+    const fpsEl = document.getElementById('stat-fps');
+    if (fpsEl) fpsEl.textContent = s.fps.toString();
+    const msEl = document.getElementById('stat-ms');
+    if (msEl) msEl.textContent = s.frameTime.toFixed(1);
+    const vertsEl = document.getElementById('stat-verts');
+    if (vertsEl) vertsEl.textContent = s.vertexCount.toLocaleString();
+    const trisEl = document.getElementById('stat-tris');
+    if (trisEl) trisEl.textContent = s.faceCount.toLocaleString();
+
+    const fpsContainer = document.getElementById('stat-fps-container');
+    if (fpsContainer) {
+      fpsContainer.className = `stat-item fps ${s.fps >= 55 ? 'good' : s.fps >= 30 ? 'mid' : 'bad'}`;
+    }
+
+    const infoFpsEl = document.getElementById('info-fps');
+    if (infoFpsEl) infoFpsEl.textContent = s.fps.toString();
+  }, []);
 
   return (
     <div className="app-layout" id="app-root">
@@ -136,9 +151,8 @@ export default function App() {
             useDualMaterial={useDualMaterial}
             tireThresholdPct={tireThresholdPct}
             onStatsUpdate={handleStatsUpdate}
-            onAngleUpdate={handleAngleUpdate}
           />
-          <StatsOverlay stats={stats} />
+          <StatsOverlay />
 
           {isInitialLoading && (
             <div style={{
@@ -209,7 +223,7 @@ export default function App() {
             <span className="info-label">Triángulos</span>
           </div>
           <div className="info-card">
-            <span className="info-value">{stats.fps}</span>
+            <span className="info-value" id="info-fps">0</span>
             <span className="info-label">FPS</span>
           </div>
           <div className="info-card">

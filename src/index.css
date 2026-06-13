@@ -214,7 +214,6 @@ body {
   align-items: center;
   gap: 8px;
   background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 6px 12px;
@@ -291,7 +290,6 @@ body {
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  backdrop-filter: blur(8px);
   animation: hint-fade 4s ease forwards;
   pointer-events: none;
 }

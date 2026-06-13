@@ -16,7 +16,6 @@ interface EngineCanvasProps {
   useDualMaterial: boolean;
   tireThresholdPct: number;
   onStatsUpdate: (stats: RendererStats) => void;
-  onAngleUpdate: (angle: number) => void;
 }
 
 interface DragState {
@@ -45,17 +44,23 @@ function computeLocalMaxRadius(bounds: ParsedMesh['bounds'], thinAxis: 0 | 1 | 2
 export function EngineCanvas({
   mesh, animState, camera, light, meshColor,
   useDualMaterial, tireThresholdPct,
-  onStatsUpdate, onAngleUpdate,
+  onStatsUpdate,
 }: EngineCanvasProps) {
   const canvasRef   = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const rafRef      = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
-  const angleRef    = useRef<number>(animState.currentAngle);
+  const angleRef    = useRef<number>(animState.currentAngle ?? 0);
   const fpsCountRef = useRef<{ frames: number; last: number }>({ frames: 0, last: 0 });
   const dragRef     = useRef<DragState>({
     isDragging: false, lastX: 0, lastY: 0,
     rotX: 0, rotY: 0, velocityX: 0, velocityY: 0,
+  });
+
+  // Keep rendering props in a ref to decouple animation loop from React render cycles
+  const propsRef = useRef({ mesh, animState, camera, light, meshColor, useDualMaterial, tireThresholdPct, onStatsUpdate });
+  useEffect(() => {
+    propsRef.current = { mesh, animState, camera, light, meshColor, useDualMaterial, tireThresholdPct, onStatsUpdate };
   });
 
   useEffect(() => {
@@ -64,17 +69,19 @@ export function EngineCanvas({
   }, [mesh]);
 
   const renderFrame = useCallback((timestamp: number) => {
+    const { mesh: currentMesh, animState: currentAnimState, camera: currentCamera, light: currentLight, meshColor: currentMeshColor, useDualMaterial: currentUseDualMaterial, tireThresholdPct: currentTireThresholdPct, onStatsUpdate: currentOnStatsUpdate } = propsRef.current;
     const renderer = rendererRef.current;
-    if (!renderer || !mesh) {
+    if (!renderer || !currentMesh) {
       rafRef.current = requestAnimationFrame(renderFrame);
       return;
     }
 
-    const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.1);
+    if (lastTimeRef.current === 0) lastTimeRef.current = timestamp;
+    const dt = Math.max(0, Math.min((timestamp - lastTimeRef.current) / 1000, 0.1));
     lastTimeRef.current = timestamp;
 
-    if (animState.isPlaying) {
-      angleRef.current += animState.rotationSpeed * Mat4.DEG2RAD * dt;
+    if (currentAnimState.isPlaying) {
+      angleRef.current += currentAnimState.rotationSpeed * Mat4.DEG2RAD * dt;
       if (angleRef.current > Math.PI * 2) angleRef.current -= Math.PI * 2;
     }
 
@@ -91,19 +98,19 @@ export function EngineCanvas({
     const f = fpsCountRef.current;
     f.frames++;
     if (timestamp - f.last >= 500) {
-      onStatsUpdate({ fps: Math.round((f.frames * 1000) / (timestamp - f.last)), frameTime: dt * 1000, vertexCount: mesh.vertexCount, faceCount: mesh.faceCount, drawCalls: 1 });
+      currentOnStatsUpdate({ fps: Math.round((f.frames * 1000) / (timestamp - f.last)), frameTime: dt * 1000, vertexCount: currentMesh.vertexCount, faceCount: currentMesh.faceCount, drawCalls: 1 });
       f.frames = 0; f.last = timestamp;
     }
 
     // ── Model matrix: T(-center) → R_autoSpin → R_user → S ─────────────────
-    const bounds  = mesh.bounds;
+    const bounds  = currentMesh.bounds;
     const maxSize = Math.max(...bounds.size, 0.001);
     const scaleF  = 1.8 / maxSize;
 
     // Detectar eje fino (axle) para auto-spin y zona de material
     const thinAxis = detectThinAxis(bounds);
     const localMaxRadius = computeLocalMaxRadius(bounds, thinAxis);
-    const tireThreshold  = localMaxRadius * tireThresholdPct;
+    const tireThreshold  = localMaxRadius * currentTireThresholdPct;
 
     // Paso 1: centrar en origen
     let m = Mat4.translate(Mat4.identity(), -bounds.center[0], -bounds.center[1], -bounds.center[2]);
@@ -134,39 +141,38 @@ export function EngineCanvas({
 
     // View + Projection
     const viewMatrix = Mat4.lookAt(
-      [camera.eyeX, camera.eyeY, camera.eyeZ],
-      [camera.targetX, camera.targetY, camera.targetZ],
-      [camera.upX, camera.upY, camera.upZ]
+      [currentCamera.eyeX, currentCamera.eyeY, currentCamera.eyeZ],
+      [currentCamera.targetX, currentCamera.targetY, currentCamera.targetZ],
+      [currentCamera.upX, currentCamera.upY, currentCamera.upZ]
     );
     const projMatrix = Mat4.perspective(
-      camera.fov * Mat4.DEG2RAD, renderer.getAspect(), camera.near, camera.far
+      currentCamera.fov * Mat4.DEG2RAD, renderer.getAspect(), currentCamera.near, currentCamera.far
     );
     const normMat = renderer.computeNormalMatrix(modelMatrix);
 
 
 
-    const lx = light.dirX, ly = light.dirY, lz = light.dirZ;
+    const lx = currentLight.dirX, ly = currentLight.dirY, lz = currentLight.dirZ;
     const lLen = Math.sqrt(lx*lx + ly*ly + lz*lz) || 1;
 
     renderer.render({
       modelMatrix, viewMatrix, projectionMatrix: projMatrix, normalMatrix: normMat,
       lightDir:  [lx / lLen, ly / lLen, lz / lLen],
-      lightColor: light.lightColor,
-      ambientIntensity:  light.ambientIntensity,
-      diffuseIntensity:  light.diffuseIntensity,
-      specularIntensity: light.specularIntensity,
-      meshColor,
-      cameraPos: [camera.eyeX, camera.eyeY, camera.eyeZ],
-      rimColor:   light.rimColor,
-      tireColor:  light.tireColor,
+      lightColor: currentLight.lightColor,
+      ambientIntensity:  currentLight.ambientIntensity,
+      diffuseIntensity:  currentLight.diffuseIntensity,
+      specularIntensity: currentLight.specularIntensity,
+      meshColor: currentMeshColor,
+      cameraPos: [currentCamera.eyeX, currentCamera.eyeY, currentCamera.eyeZ],
+      rimColor:   currentLight.rimColor,
+      tireColor:  currentLight.tireColor,
       tireThreshold,
-      useDualMaterial: useDualMaterial ? 1 : 0,
+      useDualMaterial: currentUseDualMaterial ? 1 : 0,
       thinAxis,
     });
 
-    onAngleUpdate(angleRef.current);
     rafRef.current = requestAnimationFrame(renderFrame);
-  }, [mesh, animState, camera, light, meshColor, useDualMaterial, tireThresholdPct, onStatsUpdate, onAngleUpdate]);
+  }, []);
 
   // Mouse / Touch
   useEffect(() => {
@@ -230,22 +236,19 @@ export function EngineCanvas({
     try {
       renderer.init(canvas);
       rendererRef.current = renderer;
-      if (mesh) renderer.loadMesh(mesh);
+      if (propsRef.current.mesh) renderer.loadMesh(propsRef.current.mesh);
     } catch (e) {
       console.error('[EngineCanvas] Error WebGL:', e);
       return;
     }
-    lastTimeRef.current = performance.now();
+    lastTimeRef.current = 0; // Permitir que el primer frame capture el timestamp exacto de RAF
     fpsCountRef.current = { frames: 0, last: performance.now() };
     rafRef.current = requestAnimationFrame(renderFrame);
-    return () => { cancelAnimationFrame(rafRef.current); renderer.destroy(); rendererRef.current = null; };
-  }, []);
-
-  useEffect(() => {
-    cancelAnimationFrame(rafRef.current);
-    lastTimeRef.current = performance.now();
-    rafRef.current = requestAnimationFrame(renderFrame);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      renderer.destroy();
+      rendererRef.current = null;
+    };
   }, [renderFrame]);
 
   return (

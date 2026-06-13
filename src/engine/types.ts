@@ -58,7 +58,7 @@ export interface LightParams {
 export interface AnimationState {
   isPlaying: boolean;
   rotationSpeed: number; // grados por segundo
-  currentAngle: number;  // ángulo actual en radianes
+  currentAngle?: number;  // ángulo actual en radianes
 }
 
 /** Estadísticas del renderer */
