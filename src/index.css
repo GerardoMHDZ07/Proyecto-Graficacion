@@ -87,7 +87,6 @@ body {
   padding: 0 20px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(16px);
   z-index: 100;
 }
 
@@ -677,7 +676,6 @@ body {
   padding: 12px 16px;
   max-width: 480px;
   z-index: 1000;
-  backdrop-filter: blur(16px);
   box-shadow: var(--shadow-lg), 0 0 20px rgba(239,68,68,0.15);
   animation: toast-in 0.25s ease;
   cursor: pointer;

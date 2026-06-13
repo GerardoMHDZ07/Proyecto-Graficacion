@@ -159,7 +159,6 @@ export default function App() {
               position: 'absolute',
               inset: 0,
               background: 'rgba(5, 5, 8, 0.95)',
-              backdropFilter: 'blur(16px)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
