@@ -68,17 +68,29 @@ export function EngineCanvas({
     rendererRef.current.loadMesh(mesh);
   }, [mesh]);
 
+  const smoothedDtRef = useRef<number>(1 / 60);
+
+  // Loop de renderizado
   const renderFrame = useCallback((timestamp: number) => {
-    const { mesh: currentMesh, animState: currentAnimState, camera: currentCamera, light: currentLight, meshColor: currentMeshColor, useDualMaterial: currentUseDualMaterial, tireThresholdPct: currentTireThresholdPct, onStatsUpdate: currentOnStatsUpdate } = propsRef.current;
+    if (!rendererRef.current) return;
     const renderer = rendererRef.current;
-    if (!renderer || !currentMesh) {
+    const { mesh, animState: currentAnimState, camera: currentCamera, light: currentLight, meshColor: currentMeshColor, useDualMaterial: currentUseDualMaterial, tireThresholdPct: currentTireThresholdPct, onStatsUpdate: currentOnStatsUpdate } = propsRef.current;
+
+    if (!mesh) {
       rafRef.current = requestAnimationFrame(renderFrame);
       return;
     }
 
     if (lastTimeRef.current === 0) lastTimeRef.current = timestamp;
-    const dt = Math.max(0, Math.min((timestamp - lastTimeRef.current) / 1000, 0.1));
+    let rawDt = (timestamp - lastTimeRef.current) / 1000;
     lastTimeRef.current = timestamp;
+
+    if (rawDt < 0) rawDt = 0;
+    if (rawDt > 0.1) rawDt = 1 / 60; // Cap large jumps
+
+    // Smooth dt to prevent micro-stuttering from browser timer quantization
+    smoothedDtRef.current = smoothedDtRef.current * 0.90 + rawDt * 0.10;
+    const dt = smoothedDtRef.current;
 
     if (currentAnimState.isPlaying) {
       angleRef.current += currentAnimState.rotationSpeed * Mat4.DEG2RAD * dt;
@@ -98,12 +110,12 @@ export function EngineCanvas({
     const f = fpsCountRef.current;
     f.frames++;
     if (timestamp - f.last >= 500) {
-      currentOnStatsUpdate({ fps: Math.round((f.frames * 1000) / (timestamp - f.last)), frameTime: dt * 1000, vertexCount: currentMesh.vertexCount, faceCount: currentMesh.faceCount, drawCalls: 1 });
+      currentOnStatsUpdate({ fps: Math.round((f.frames * 1000) / (timestamp - f.last)), frameTime: dt * 1000, vertexCount: mesh.vertexCount, faceCount: mesh.faceCount, drawCalls: 1 });
       f.frames = 0; f.last = timestamp;
     }
 
     // ── Model matrix: T(-center) → R_autoSpin → R_user → S ─────────────────
-    const bounds  = currentMesh.bounds;
+    const bounds  = mesh.bounds;
     const maxSize = Math.max(...bounds.size, 0.001);
     const scaleF  = 1.8 / maxSize;
 
