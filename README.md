@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# ⬡ WheelEngine 3D — Motor Gráfico WebGL
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Motor gráfico web interactivo en 3D desarrollado en **React, TypeScript y WebGL puro (sin librerías externas)** para la visualización y animación de modelos de alta densidad poligonal.
 
-Currently, two official plugins are available:
+🚀 **[VER APLICACIÓN EN VIVO (LIVE DEMO)](https://gerardomhdz07.github.io/Proyecto-Graficacion/)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🛠️ Características Principales
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Renderizador WebGL Puro**: Implementado utilizando la API nativa de WebGL 1.0 con shaders personalizados escritos en GLSL.
+- **Shader de Material Dual**: Detección inteligente del eje de rotación (axle) y delimitación de zonas en tiempo real para aplicar diferentes propiedades físicas (Rin cromado con alta especularidad y Fresnel + Llanta de goma oscura mate).
+- **Iluminación Phong**: Luces ambiente, difusa (Lambertiana) y especular (Blinn-Phong) con controles de dirección, color e intensidad en tiempo real.
+- **Animación e Interacción**: Simulación del giro del modelo con velocidad ajustable e inercia física suave al arrastrar la cámara y el modelo con el ratón.
+- **Cargador de Modelos**:
+  - Generador procedural de ruedas integrado para demostración inicial.
+  - Parser robusto de archivos de texto `.txt` (soporta mallas de alta densidad con más de 65,535 vértices).
+  - **Botón de Carga Rápida**: Descarga el archivo `model_estructurado_limpio.txt` directamente desde los archivos del repositorio alojados en la nube con un solo clic.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 💻 Ejecución Local
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+2. Ejecuta el servidor de desarrollo local:
+   ```bash
+   npm run dev
+   ```
+3. Abre [http://localhost:5173/](http://localhost:5173/) en tu navegador.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🚀 Despliegue en GitHub Pages
+
+Para publicar cualquier nuevo cambio que realices en el código a la web en vivo:
+```bash
+npm run deploy
 ```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Esto compilará y actualizará de manera automática la rama `gh-pages` de tu repositorio de GitHub.
