@@ -59,6 +59,34 @@ export function FileLoader({ onMeshLoaded, onError, currentFile }: FileLoaderPro
     if (file) processFile(file);
   };
 
+  const loadFromRepo = async (fileName: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}${fileName}`);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status} al descargar el modelo de la llanta desde el servidor.`);
+      }
+      const content = await response.text();
+      const result = parseMeshFile(content);
+
+      if (result.errors.length > 0 && !result.mesh) {
+        onError(`Error al parsear "${fileName}":\n${result.errors[0].message}`);
+        return;
+      }
+
+      if (result.mesh) {
+        if (result.warnings.length > 0) {
+          console.warn(`[FileLoader] ${result.warnings.length} advertencias al parsear:`, result.warnings);
+        }
+        onMeshLoaded(result.mesh, fileName);
+      }
+    } catch (e) {
+      onError(`No se pudo cargar desde el repositorio: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="file-loader-section">
       <div className="section-title">
@@ -98,6 +126,16 @@ export function FileLoader({ onMeshLoaded, onError, currentFile }: FileLoaderPro
           </>
         )}
       </div>
+
+      <button
+        type="button"
+        className="repo-load-button"
+        onClick={() => loadFromRepo('model_estructurado_limpio.txt')}
+        disabled={isLoading}
+        id="load-repo-model-btn"
+      >
+        📥 Cargar Llanta (2.5MB)
+      </button>
 
       <input
         ref={inputRef}

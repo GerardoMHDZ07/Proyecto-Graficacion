@@ -703,6 +703,34 @@ body {
 }
 .error-close:hover { color: var(--text-primary); }
 
+/* Botón para cargar modelo del repositorio */
+.repo-load-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-md);
+  color: var(--accent-cyan);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-medium);
+  white-space: nowrap;
+}
+.repo-load-button:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+.repo-load-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   :root { --panel-w: 260px; --bottombar-h: 120px; }
