@@ -51,10 +51,12 @@ export default function App() {
   const [tireThresholdPct, setTireThresholdPct] = useState(0.78); // 78% del radio = borde rin/llanta
   const [stats,            setStats]            = useState<RendererStats>({ fps: 0, frameTime: 0, vertexCount: 0, faceCount: 0, drawCalls: 0 });
   const [error,            setError]            = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Cargar de forma automática el modelo estructurado de la llanta desde el repo al iniciar la aplicación
   useEffect(() => {
     const loadDefaultModel = async () => {
+      setIsInitialLoading(true);
       try {
         const response = await fetch(`${import.meta.env.BASE_URL}model_estructurado_limpio.txt`);
         if (!response.ok) {
@@ -74,6 +76,8 @@ export default function App() {
         }
       } catch (err) {
         console.warn('[App] No se pudo cargar el modelo por defecto desde el servidor, se mantiene el modelo de demostración procedural:', err);
+      } finally {
+        setIsInitialLoading(false);
       }
     };
 
@@ -136,13 +140,34 @@ export default function App() {
           />
           <StatsOverlay stats={stats} />
 
+          {isInitialLoading && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(5, 5, 8, 0.95)',
+              backdropFilter: 'blur(16px)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              zIndex: 100,
+              color: '#38bdf8'
+            }}>
+              <div className="spinner" style={{ width: '40px', height: '40px', borderWidth: '3px' }} />
+              <span style={{ fontFamily: 'Inter', fontWeight: 600, fontSize: '11px', letterSpacing: '0.15em' }}>
+                DESCARGANDO Y PROCESANDO MODELO 3D DE LA LLANTA...
+              </span>
+            </div>
+          )}
+
           <div className="axis-label" id="axis-label">
             <span className="axis-badge">Z</span> Eje de Rotación
           </div>
 
           <div className="drag-hint" id="drag-hint">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2-2v0"/>
               <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
               <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
               <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
