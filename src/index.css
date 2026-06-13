@@ -74,8 +74,8 @@ body {
   display: grid;
   grid-template-rows: var(--topbar-h) 1fr var(--bottombar-h);
   grid-template-columns: 1fr;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -740,8 +740,17 @@ body {
     --panel-w: 100%;
     --bottombar-h: 60px;
   }
-  .main-content { flex-direction: column; }
-  .canvas-wrapper { flex: 1; min-height: 40vh; }
+  .app-layout {
+    height: 100dvh; /* Asegura el tamaño visible real en móviles Chrome/Safari */
+  }
+  .main-content {
+    flex-direction: column;
+    min-height: 0; /* Evita que el contenedor desborde e introduzca scroll invisible */
+  }
+  .canvas-wrapper {
+    flex: 1;
+    min-height: 150px; /* Permite al canvas encogerse en pantallas de baja altura */
+  }
   .control-panel {
     width: 100%;
     height: 220px;
