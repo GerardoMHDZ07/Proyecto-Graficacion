@@ -2,13 +2,14 @@
 // App.tsx — v2: Dual-material (rin+llanta) + mejores defaults de iluminación
 // =============================================================================
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { EngineCanvas }  from './components/EngineCanvas';
 import { ControlPanel }  from './components/ControlPanel';
 import { FileLoader }    from './components/FileLoader';
 import { StatsOverlay }  from './components/StatsOverlay';
 import { generateWheelMesh } from './engine/geometry';
 import { MATERIAL_COLORS }   from './engine/shaders';
+import { parseMeshFile }     from './engine/parser';
 import type {
   ParsedMesh, CameraParams, LightParams, AnimationState, RendererStats
 } from './engine/types';
@@ -50,6 +51,34 @@ export default function App() {
   const [tireThresholdPct, setTireThresholdPct] = useState(0.78); // 78% del radio = borde rin/llanta
   const [stats,            setStats]            = useState<RendererStats>({ fps: 0, frameTime: 0, vertexCount: 0, faceCount: 0, drawCalls: 0 });
   const [error,            setError]            = useState<string | null>(null);
+
+  // Cargar de forma automática el modelo estructurado de la llanta desde el repo al iniciar la aplicación
+  useEffect(() => {
+    const loadDefaultModel = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}model_estructurado_limpio.txt`);
+        if (!response.ok) {
+          throw new Error(`Error ${response.status} al descargar el modelo por defecto.`);
+        }
+        const content = await response.text();
+        const result = parseMeshFile(content);
+
+        if (result.errors.length > 0 && !result.mesh) {
+          console.error('[App] Error al parsear el modelo de inicio:', result.errors[0].message);
+          return;
+        }
+
+        if (result.mesh) {
+          setMesh(result.mesh);
+          setFilename('model_estructurado_limpio.txt');
+        }
+      } catch (err) {
+        console.warn('[App] No se pudo cargar el modelo por defecto desde el servidor, se mantiene el modelo de demostración procedural:', err);
+      }
+    };
+
+    loadDefaultModel();
+  }, []);
 
   const handleMeshLoaded = useCallback((newMesh: ParsedMesh, fname: string) => {
     setMesh(newMesh);
