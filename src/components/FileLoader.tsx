@@ -120,7 +120,14 @@ export function FileLoader({ onMeshLoaded, onError, currentFile }: FileLoaderPro
               <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
             </svg>
             <p className="drop-text">
-              {currentFile !== 'Demo' ? `📄 ${currentFile}` : 'Arrastra tu .txt aquí'}
+              {currentFile !== 'Demo' ? (
+                `📄 ${currentFile}`
+              ) : (
+                <>
+                  <span className="desktop-only-text">Arrastra tu .txt aquí</span>
+                  <span className="mobile-only-text">Subir Archivo</span>
+                </>
+              )}
             </p>
             <p className="drop-subtext">o haz clic para seleccionar</p>
           </>
